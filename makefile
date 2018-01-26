@@ -1,18 +1,37 @@
-SRC_DIR = ./src
-TEST_DIR = ./test
-OBJ = md5.o test.o
-EXE = md5_test
-CC = g++
+ARCH := powerpc-e300c3-linux-gnu-
+ARCH := arm-linux-
+ARCH := 
+CC := $(ARCH)g++
+AR := $(ARCH)ar
+ARFLAG := -rc
+STRIP := $(ARCH)strip
+INCS := $(wildcard [a-y]*/*.h)
+OBJS := $(patsubst %.c, %.o, $(wildcard [a-y]*/*.c))
+OBJS += $(patsubst %.cpp, %.o, $(wildcard [a-y]*/*.cpp))
+CFLAGS := $(patsubst %, -I%, $(shell find [a-y]* -type d))
+LIB_TARGET := thislib.a
+EXE_TARGET := md5.exe
 
+all: $(EXE_TARGET)
+	@echo -n "\033[33;4m"
+	@echo "strip  {$+}"
+	@echo -n "\33[0m\033[32m"
+	@ls -1sh $+ $(LIB_TARGET)
+	@echo -n "\033[0m"
 
-$(EXE): $(OBJ)
-	$(CC) -o $(EXE) $(SRC_DIR)/* $(TEST_DIR)/*
+md5.exe: ztest/test.cpp $(LIB_TARGET)
+	@echo "$(CC) ztest/service_server.cpp => $@"
+	@$(CC) $(CFLAGS) $+ -o $@
+	@$(STRIP) $@
+thislib.a:$(OBJS)
+	@$(AR) $(ARFLAG) $@ $+
 
-md5.o:
-	$(CC) -c $(SRC_DIR)/md5.cpp
-
-test.o:
-	$(CC) -c $(TEST_DIR)/test.cpp
+.c.o: $(INCS)
+	@$(CC) $(CFLAGS) -c $*.c -o $@
+	@echo '$(CC) $*.c => $@'
+.cpp.o: $(INCS)
+	@$(CC) $(CFLAGS) -c $*.cpp -o $@
+	@echo '$(CC) $*.cpp => $@'
 
 clean:
-	rm -f *.o
+	@rm -rfv $(OBJS) $(EXE_TARGET) $(LIB_TARGET)
